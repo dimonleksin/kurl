@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/scram"
 )
 
 const retries = 3
@@ -18,6 +19,8 @@ var (
 	action           *string
 	topic            *string
 	msg              string
+	username         *string
+	passwd           *string
 )
 
 func main() {
@@ -35,16 +38,40 @@ func main() {
 	topic = flag.String(
 		"topic",
 		"",
-		"Name of topic to read/write",
+		"Name of topic to read/write(str)",
+	)
+	username = flag.String(
+		"user",
+		"",
+		"User name for connect to cluster(str)",
+	)
+	passwd = flag.String(
+		"password",
+		"",
+		"User name for connect to cluster(str)",
 	)
 
 	flag.Parse()
+	mechanism, err := scram.Mechanism(scram.SHA256, *username, *passwd)
+
+	if err != nil {
+		panic(err)
+	}
+
+	dialer := &kafka.Dialer{
+		Timeout:       10 * time.Second,
+		DualStack:     true,
+		SASLMechanism: mechanism,
+	}
+
 	if *action == "read" {
+
 		r := kafka.NewReader(kafka.ReaderConfig{
 			Brokers:  []string{*bootstrap_server},
 			GroupID:  "consumer-group-id",
 			Topic:    *topic,
 			MaxBytes: 10e6, // 10MB
+			Dialer:   dialer,
 		})
 
 		for {
@@ -60,10 +87,14 @@ func main() {
 			log.Fatal("failed to close reader:", err)
 		}
 	} else if *action == "write" {
+		sharedTransport := &kafka.Transport{
+			SASL: mechanism,
+		}
 		w := &kafka.Writer{
 			Addr:                   kafka.TCP(*bootstrap_server),
 			Topic:                  *topic,
 			AllowAutoTopicCreation: false,
+			Transport:              sharedTransport,
 		}
 
 		var err error
