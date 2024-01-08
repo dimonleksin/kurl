@@ -14,7 +14,6 @@ import (
 func Read(s settings.Setting) error {
 	conf := kafka.ReaderConfig{
 		Brokers:  []string{*s.BootstrapServer},
-		GroupID:  "consumer-group-id",
 		Topic:    *s.Topic,
 		MaxBytes: 10e6, // 10MB
 	}
