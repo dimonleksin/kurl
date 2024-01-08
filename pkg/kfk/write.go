@@ -13,7 +13,7 @@ import (
 
 func Write(s settings.Setting) error {
 	tmp := *s.BootstrapServer
-	const retries int = 3
+	const retries int = 2
 	w := &kafka.Writer{
 		Addr:                   kafka.TCP([]string{tmp}...),
 		Topic:                  *s.Topic,

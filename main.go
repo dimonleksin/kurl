@@ -10,6 +10,10 @@ import (
 func main() {
 	s := settings.Setting{}
 	s.GetSettings()
+	err := s.VerifyConf()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if *s.Help || *s.HelpTwo {
 		kfk.PrintHelp()
