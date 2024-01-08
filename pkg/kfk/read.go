@@ -11,6 +11,7 @@ import (
 	"github.com/segmentio/kafka-go/sasl/scram"
 )
 
+// Func to read to setting topic
 func Read(s settings.Setting) error {
 	conf := kafka.ReaderConfig{
 		Brokers:  []string{*s.BootstrapServer},

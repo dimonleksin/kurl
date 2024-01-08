@@ -22,7 +22,6 @@ func (s *Setting) GetSettings() {
 		"127.0.0.1:9092",
 		"Bootstrap server anf port (kafka1:9092) of kafka",
 	)
-
 	s.Action = flag.String(
 		"action",
 		"read",
@@ -58,6 +57,7 @@ func (s *Setting) GetSettings() {
 	flag.Parse()
 }
 
+// VerifyConf() returning error if one or any args incorrect
 func (s Setting) VerifyConf() error {
 	if len(*s.Username) > 0 {
 		if len(*s.Passwd) == 0 {

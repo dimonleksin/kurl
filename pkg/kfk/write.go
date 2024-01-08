@@ -11,6 +11,7 @@ import (
 	"github.com/segmentio/kafka-go/sasl/scram"
 )
 
+// Func for write to seting topic
 func Write(s settings.Setting) error {
 	tmp := *s.BootstrapServer
 	const retries int = 2
