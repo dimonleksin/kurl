@@ -38,7 +38,7 @@ func Read(s settings.Setting) error {
 	for {
 		m, err := r.ReadMessage(context.Background())
 		if err != nil {
-			log.Fatal("Error read messages")
+			log.Print("Error read messages")
 			return err
 		}
 		fmt.Printf("message at topic/partition/offset %v/%v/%v: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))

@@ -12,9 +12,10 @@ import (
 )
 
 func Write(s settings.Setting) error {
+	tmp := *s.BootstrapServer
 	const retries int = 3
 	w := &kafka.Writer{
-		Addr:                   kafka.TCP(*s.BootstrapServer),
+		Addr:                   kafka.TCP([]string{tmp}...),
 		Topic:                  *s.Topic,
 		AllowAutoTopicCreation: false,
 		// Transport:              sharedTransport,

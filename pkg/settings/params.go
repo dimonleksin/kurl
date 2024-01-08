@@ -19,6 +19,7 @@ func (s *Setting) GetSettings() {
 		"127.0.0.1:9092",
 		"Bootstrap server anf port (kafka1:9092) of kafka",
 	)
+
 	s.Action = flag.String(
 		"action",
 		"read",
