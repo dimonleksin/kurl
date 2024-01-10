@@ -22,7 +22,7 @@ jobs:
         go-version: '1.20'
 
     - name: Build
-      run: go build -o kurl -v ./...
+      run: go build -o kurl main.go
     
     - name: Upload Go results
       uses: actions/upload-artifact@v3
