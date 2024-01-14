@@ -59,24 +59,26 @@ func (s *Setting) GetSettings() {
 
 // VerifyConf() returning error if one or any args incorrect
 func (s Setting) VerifyConf() error {
-	if len(*s.Username) > 0 {
-		if len(*s.Passwd) == 0 {
-			return errors.New("password is not set. -h or --help for more details")
+	if !*s.Help && !*s.HelpTwo {
+		if len(*s.Username) > 0 {
+			if len(*s.Passwd) == 0 {
+				return errors.New("password is not set. -h or --help for more details")
+			}
 		}
-	}
-	if len(*s.Passwd) > 0 {
-		if len(*s.Username) == 0 {
-			return errors.New("username is not set. -h or --help for more details")
+		if len(*s.Passwd) > 0 {
+			if len(*s.Username) == 0 {
+				return errors.New("username is not set. -h or --help for more details")
+			}
 		}
-	}
-	if len(*s.Topic) == 0 {
-		return errors.New("name of topic not set. -h or --help for more details")
-	}
-	if len(*s.BootstrapServer) == 0 {
-		return errors.New("bootstrap server is not set. -h or --help for more details")
-	}
-	if len(*s.Action) == 0 {
-		return errors.New("action is not  set. -h or --help for more details")
+		if len(*s.Topic) == 0 {
+			return errors.New("name of topic not set. -h or --help for more details")
+		}
+		if len(*s.BootstrapServer) == 0 {
+			return errors.New("bootstrap server is not set. -h or --help for more details")
+		}
+		if len(*s.Action) == 0 {
+			return errors.New("action is not  set. -h or --help for more details")
+		}
 	}
 	return nil
 }
