@@ -14,6 +14,7 @@ type Setting struct {
 	Passwd          *string
 	Help            *bool
 	HelpTwo         *bool
+	NumberOfMessage *int
 }
 
 func (s *Setting) GetSettings() {
@@ -53,6 +54,11 @@ func (s *Setting) GetSettings() {
 		false,
 		"-h or --help for print Help",
 	)
+	s.NumberOfMessage = flag.Int(
+		"message",
+		-1,
+		"number of message for read. Defaul -1",
+	)
 
 	flag.Parse()
 }
@@ -78,6 +84,11 @@ func (s Setting) VerifyConf() error {
 		}
 		if len(*s.Action) == 0 {
 			return errors.New("action is not  set. -h or --help for more details")
+		}
+		if *s.Action != "read" {
+			if *s.NumberOfMessage != -1 {
+				return errors.New("--message can`t set for action not equal 'read'")
+			}
 		}
 	}
 	return nil

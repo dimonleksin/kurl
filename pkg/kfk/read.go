@@ -36,6 +36,13 @@ func Read(s settings.Setting) error {
 	r := kafka.NewReader(conf)
 	defer r.Close()
 	for {
+		if *s.NumberOfMessage != -1 {
+			*s.NumberOfMessage -= 1
+		}
+		if *s.NumberOfMessage == 0 {
+			log.Println("End of number of topics...")
+			return nil
+		}
 		m, err := r.ReadMessage(context.Background())
 		if err != nil {
 			log.Print("Error read messages")
