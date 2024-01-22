@@ -36,17 +36,17 @@ func Read(s settings.Setting) error {
 	r := kafka.NewReader(conf)
 	defer r.Close()
 	for {
+		m, err := r.ReadMessage(context.Background())
+		if err != nil {
+			log.Print("Error read messages")
+			return err
+		}
 		if *s.NumberOfMessage != -1 {
 			*s.NumberOfMessage -= 1
 		}
 		if *s.NumberOfMessage == 0 {
 			log.Println("End of number of topics...")
 			return nil
-		}
-		m, err := r.ReadMessage(context.Background())
-		if err != nil {
-			log.Print("Error read messages")
-			return err
 		}
 		fmt.Printf("message at topic/partition/offset %v/%v/%v: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
 	}
