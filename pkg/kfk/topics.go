@@ -1,0 +1,19 @@
+package kfk
+
+import (
+	"context"
+
+	"github.com/dimonleksin/kurl/pkg/settings"
+	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/topics"
+)
+
+func TopicList(s *settings.Setting) ([]kafka.Topic, error) {
+	list, err := topics.List(
+		context.Background(),
+		*kafka.Client{
+			Addr: kafka.TCP([]string{*s.BootstrapServer}),
+		}
+	)
+	return list, err
+}
