@@ -33,6 +33,10 @@ func Read(s settings.Setting) error {
 		}
 		conf.Dialer = Dialer
 	}
+	err := conf.Validate()
+	if err != nil {
+		return err
+	}
 	r := kafka.NewReader(conf)
 	defer r.Close()
 	for {
