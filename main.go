@@ -18,13 +18,21 @@ func main() {
 	if *s.Help || *s.HelpTwo {
 		kfk.PrintHelp()
 	} else if *s.Action == "read" {
-		err := kfk.Read(s)
+		cli, err := s.Conf()
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = kfk.Read(s, cli)
 		if err != nil {
 			log.Fatal(err)
 			panic(err)
 		}
 	} else if *s.Action == "write" {
-		err := kfk.Write(s)
+		cli, err := s.Conf()
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = kfk.Write(s, cli)
 		if err != nil {
 			log.Fatal(err)
 			panic(err)

@@ -1,57 +1,38 @@
 package kfk
 
 import (
-	"context"
 	"fmt"
-	"log"
-	"time"
+	"sync"
 
+	"github.com/IBM/sarama"
 	"github.com/dimonleksin/kurl/pkg/settings"
-	"github.com/segmentio/kafka-go"
-	"github.com/segmentio/kafka-go/sasl/scram"
 )
 
-// Func to read to setting topic
-func Read(s settings.Setting) error {
-	conf := kafka.ReaderConfig{
-		Brokers:  []string{*s.BootstrapServer},
-		Topic:    *s.Topic,
-		MaxBytes: 10e6, // 10MB
-	}
-
-	if *s.Username != "" && *s.Passwd != "" {
-		mechanism, err := scram.Mechanism(scram.SHA256, *s.Username, *s.Passwd)
-
-		if err != nil {
-			return err
-		}
-
-		Dialer := &kafka.Dialer{
-			Timeout:       10 * time.Second,
-			DualStack:     true,
-			SASLMechanism: mechanism,
-		}
-		conf.Dialer = Dialer
-	}
-	err := conf.Validate()
+func Read(s settings.Setting, cli sarama.Client) (err error) {
+	var wg sync.WaitGroup
+	consumer, err := sarama.NewConsumerFromClient(cli)
 	if err != nil {
 		return err
 	}
-	r := kafka.NewReader(conf)
-	defer r.Close()
-	for {
-		if *s.NumberOfMessage != -1 {
-			*s.NumberOfMessage -= 1
-		}
-		if *s.NumberOfMessage == 0 {
-			log.Println("End of number of topics...")
-			return nil
-		}
-		m, err := r.ReadMessage(context.Background())
-		if err != nil {
-			log.Print("Error read messages")
-			return err
-		}
-		fmt.Printf("message at topic/partition/offset %v/%v/%v: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+	defer consumer.Close()
+	partitions, err := consumer.Partitions(*s.Topic)
+	if err != nil {
+		return err
 	}
+	wg.Add(len(partitions))
+	for p := range partitions {
+		partitionConsumer, err := consumer.ConsumePartition(*s.Topic, int32(p), sarama.OffsetOldest)
+		c := partitionConsumer.Messages()
+		if err != nil {
+			panic(err)
+		}
+		go func(c <-chan *sarama.ConsumerMessage) {
+			for message := range c {
+				fmt.Println(message)
+			}
+			wg.Done()
+		}(c)
+	}
+	wg.Wait()
+	return nil
 }

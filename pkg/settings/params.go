@@ -3,25 +3,30 @@ package settings
 import (
 	"errors"
 	"flag"
+	"strings"
+
+	"github.com/IBM/sarama"
 )
 
 type Setting struct {
-	BootstrapServer *string
-	Action          *string
-	Topic           *string
-	Msg             string
-	Username        *string
-	Passwd          *string
-	Help            *bool
-	HelpTwo         *bool
-	NumberOfMessage *int
+	BootstrapServerPtr *string
+	BootstrapServer    []string
+	Action             *string
+	Topic              *string
+	Msg                string
+	Username           *string
+	Passwd             *string
+	Help               *bool
+	HelpTwo            *bool
+	NumberOfMessage    *int
 }
 
 func (s *Setting) GetSettings() {
-	s.BootstrapServer = flag.String(
+	const sep string = ","
+	s.BootstrapServerPtr = flag.String(
 		"bootstrap_server",
 		"127.0.0.1:9092",
-		"Bootstrap server anf port (kafka1:9092) of kafka",
+		"Bootstrap server anf port (kafka1:9092[,kafka2:9092...]) of kafka",
 	)
 	s.Action = flag.String(
 		"action",
@@ -61,6 +66,12 @@ func (s *Setting) GetSettings() {
 	)
 
 	flag.Parse()
+	s.parsingBrokers(sep)
+}
+
+func (s *Setting) parsingBrokers(separator string) {
+	t := strings.Split(*s.BootstrapServerPtr, separator)
+	s.BootstrapServer = append(s.BootstrapServer, t...)
 }
 
 // VerifyConf() returning error if one or any args incorrect
@@ -79,7 +90,7 @@ func (s Setting) VerifyConf() error {
 		if len(*s.Topic) == 0 {
 			return errors.New("name of topic not set. -h or --help for more details")
 		}
-		if len(*s.BootstrapServer) == 0 {
+		if len(*s.BootstrapServerPtr) == 0 {
 			return errors.New("bootstrap server is not set. -h or --help for more details")
 		}
 		if len(*s.Action) == 0 {
@@ -92,4 +103,24 @@ func (s Setting) VerifyConf() error {
 		}
 	}
 	return nil
+}
+
+func (s Setting) Conf() (cli sarama.Client, err error) {
+	config := sarama.NewConfig()
+	if len(*s.Username) != 0 {
+
+		config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA256} }
+		config.Net.SASL.Mechanism = sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA256)
+		config.Net.SASL.User = *s.Username
+		config.Net.SASL.Password = *s.Passwd
+		config.Net.SASL.Enable = true
+	}
+
+	// config.Version = s.KafkaApiVersionFormated
+	cli, err = sarama.NewClient(s.BootstrapServer, config)
+	// cli, err = sarama.NewConsumer(s.BootstrapServer, config)
+	if err != nil {
+		return nil, err
+	}
+	return cli, nil
 }
