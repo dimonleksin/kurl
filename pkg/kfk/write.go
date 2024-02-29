@@ -14,7 +14,7 @@ func Write(s settings.Setting, cli sarama.Client) (err error) {
 	// producer := cli.
 	producer, err := sarama.NewSyncProducerFromClient(cli)
 	if err != nil {
-		return err
+		return fmt.Errorf("error when create produsser. err: %v", err)
 	}
 	defer producer.Close()
 	for {

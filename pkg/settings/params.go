@@ -3,22 +3,25 @@ package settings
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"strings"
 
 	"github.com/IBM/sarama"
 )
 
 type Setting struct {
-	BootstrapServerPtr *string
-	BootstrapServer    []string
-	Action             *string
-	Topic              *string
-	Msg                string
-	Username           *string
-	Passwd             *string
-	Help               *bool
-	HelpTwo            *bool
-	NumberOfMessage    *int
+	BootstrapServerPtr      *string
+	BootstrapServer         []string
+	Action                  *string
+	Topic                   *string
+	Msg                     string
+	Username                *string
+	Passwd                  *string
+	Help                    *bool
+	HelpTwo                 *bool
+	NumberOfMessage         *int
+	KafkaApiVersion         *string
+	KafkaApiVersionFormated sarama.KafkaVersion
 }
 
 func (s *Setting) GetSettings() {
@@ -49,6 +52,12 @@ func (s *Setting) GetSettings() {
 		"User name for connect to cluster(str)",
 	)
 
+	s.KafkaApiVersion = flag.String(
+		"api-version",
+		"2.7.0",
+		"--api-version seted version of brokers",
+	)
+
 	s.Help = flag.Bool(
 		"h",
 		false,
@@ -67,11 +76,23 @@ func (s *Setting) GetSettings() {
 
 	flag.Parse()
 	s.parsingBrokers(sep)
+	s.getKafkaVersion()
 }
 
 func (s *Setting) parsingBrokers(separator string) {
 	t := strings.Split(*s.BootstrapServerPtr, separator)
 	s.BootstrapServer = append(s.BootstrapServer, t...)
+}
+
+func (s *Setting) getKafkaVersion() {
+	var (
+		err error
+	)
+	s.KafkaApiVersionFormated, err = sarama.ParseKafkaVersion(*s.KafkaApiVersion)
+	if err != nil {
+		fmt.Printf("Error parsing broker api version: %v.\n\tSupported version: %v", err, sarama.SupportedVersions)
+		panic("")
+	}
 }
 
 // VerifyConf() returning error if one or any args incorrect
@@ -108,7 +129,6 @@ func (s Setting) VerifyConf() error {
 func (s Setting) Conf() (cli sarama.Client, err error) {
 	config := sarama.NewConfig()
 	if len(*s.Username) != 0 {
-
 		config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA256} }
 		config.Net.SASL.Mechanism = sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA256)
 		config.Net.SASL.User = *s.Username
@@ -116,7 +136,9 @@ func (s Setting) Conf() (cli sarama.Client, err error) {
 		config.Net.SASL.Enable = true
 	}
 
-	// config.Version = s.KafkaApiVersionFormated
+	config.Version = s.KafkaApiVersionFormated
+	config.Producer.Return.Errors = true
+	config.Producer.Return.Successes = true
 	cli, err = sarama.NewClient(s.BootstrapServer, config)
 	// cli, err = sarama.NewConsumer(s.BootstrapServer, config)
 	if err != nil {
